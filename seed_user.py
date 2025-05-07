@@ -58,7 +58,7 @@ def seed_cctvs():
         # Daftar CCTV yang akan ditambahkan
         cctvs_data = [
             {
-                "cctv_ip": "https://192.168.1.7:8080",
+                "cctv_ip": "https://10.44.10.76:8080",
                 "nama_cctv": "CCTV Minimarket 1",
             },
             {

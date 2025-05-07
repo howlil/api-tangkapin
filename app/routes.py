@@ -68,8 +68,8 @@ def update_status_predict(predict_id):
     return update_status(predict_id, data)
 
 @main_bp.route('/api/v1/cctv', methods=['GET'])
-@authenticate
+# @authenticate
 def video_stream():
     CCTV_IP = os.getenv("CCTV_IP")
-    model = load_model("app/models/best.pt")  # Ganti dengan path model Anda
+    model = load_model("app/models/best.pt")  
     return video_feed(CCTV_IP, model)

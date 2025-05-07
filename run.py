@@ -5,12 +5,13 @@ from app.utils.detection_knife import real_time_detection
 from app.helpers.logger import setup_logger
 import threading
 
-load_dotenv()
 logger = setup_logger("App")
 app = create_app()
+load_dotenv()
 
 MODELS = "app/models/best.pt"
 CCTV_IP = os.getenv("CCTV_IP")
+
 
 def start_real_time_detection():
     """

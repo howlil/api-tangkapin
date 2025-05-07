@@ -97,7 +97,6 @@ def send_incident_notifications(owner, predict_id, nearby_police, images, addres
 def get_owner_id_by_cctv_ip(cctv_ip):
     try:
         cctv = db.session.query(CCTV).options(joinedload(CCTV.user)).filter_by(cctv_ip=cctv_ip).first()
-        
         if not cctv:
             return None
         return cctv.user_id
