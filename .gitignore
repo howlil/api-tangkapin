@@ -3,3 +3,5 @@ __pycache__
 app/__pycache__
 venv
 migrations
+logs
+temp_detections
