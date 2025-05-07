@@ -60,7 +60,7 @@ class User(db.Model):
         return generate_password_hash(password)
 
     tokens = db.relationship("Token", back_populates="user", cascade="all, delete-orphan")
-    result_predicts = db.relationship("ResultPredict", back_populates="user", cascade="all, delete-orphan")
+    predicts = db.relationship("Predict", back_populates="user", cascade="all, delete-orphan")
     cctvs = db.relationship("CCTV", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -78,35 +78,21 @@ class Token(db.Model):
     # Relationships
     user = db.relationship("User", back_populates="tokens")
 
-# ResultPredict Model
-class ResultPredict(db.Model):
-    __tablename__ = "result_predicts"
-    
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("user.id"), nullable=False)
-    predict_id = db.Column(UUID(as_uuid=True), db.ForeignKey("predicts.id"), unique=True, nullable=False)
-    status = db.Column(db.Enum(StatusEnum), nullable=False)
-    created_at = db.Column(TimezoneAwareDateTime, default=get_jakarta_time)
-    updated_at = db.Column(TimezoneAwareDateTime, onupdate=get_jakarta_time, default=get_jakarta_time)
-
-    
-    # Relationships
-    user = db.relationship("User", back_populates="result_predicts")
-    predict = db.relationship("Predict", back_populates="result")
-
-# Predict Model
+# Predict Model - Now includes status field from ResultPredict
 class Predict(db.Model):
     __tablename__ = "predicts"
     
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("user.id"), nullable=False)
     deskripsi = db.Column(db.Text, nullable=False)
+    status = db.Column(db.Enum(StatusEnum), nullable=False, default=StatusEnum.PENDING)
     created_at = db.Column(TimezoneAwareDateTime, default=get_jakarta_time)
     updated_at = db.Column(TimezoneAwareDateTime, onupdate=get_jakarta_time, default=get_jakarta_time)
 
     
     # Relationships
     images = db.relationship("Images", back_populates="predict", cascade="all, delete-orphan")
-    result = db.relationship("ResultPredict", back_populates="predict", uselist=False)
+    user = db.relationship("User", back_populates="predicts")
 
 # CCTV Model
 class CCTV(db.Model):

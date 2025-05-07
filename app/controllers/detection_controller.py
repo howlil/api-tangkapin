@@ -1,10 +1,9 @@
-
 # app/controllers/detection_controller
 
 from app import db
 from math import radians
 from sqlalchemy import func
-from app.models import User,CCTV, Predict, Images, ResultPredict, StatusEnum,RoleEnum
+from app.models import User, CCTV, Predict, Images, StatusEnum, RoleEnum
 from flask import request, jsonify
 from sqlalchemy.orm import joinedload
 from app.helpers.logger import setup_logger
@@ -19,7 +18,7 @@ logger = setup_logger("detection")
 
 local_time = get_local_time()
 
-def update_status(result_predict_id, data):
+def update_status(predict_id, data):
     """
     Mengubah status laporan berdasarkan ID laporan.
     """
@@ -31,7 +30,7 @@ def update_status(result_predict_id, data):
             return jsonify({"error": "Invalid status value"}), 400
 
         # Cari laporan berdasarkan ID
-        laporan = ResultPredict.query.filter_by(id=result_predict_id).first()
+        laporan = Predict.query.filter_by(id=predict_id).first()
 
         if not laporan:
             return jsonify({"error": "Laporan not found"}), 404
@@ -56,13 +55,12 @@ def update_status(result_predict_id, data):
         return jsonify({"error": "An error occurred", "details": str(e)}), 500
     
     
-
 def send_incident_notifications(owner, predict_id, nearby_police, images, address):
     """
     Fungsi untuk mengirim notifikasi ke owner dan police terdekat
     """
     try:
-        logger.info("send notfication owner")
+        logger.info("send notification owner")
         # Notifikasi ke owner
         owner_notification = {
             "type": "incident_detected",
@@ -153,9 +151,13 @@ def create_report(owner_id, array_image, description):
             logger.warning("No police found within 20km radius.")
             return jsonify({"error": "No police found within 20km radius"}), 404
 
-        # Buat laporan Predict
+        # Buat laporan Predict dengan status PENDING
         logger.info("Creating predict entry...")
-        predict = Predict(deskripsi=f"Telah terjadi perampokan di {owner.address} dari korban {owner.name}")
+        predict = Predict(
+            user_id=owner.id,
+            deskripsi=f"Telah terjadi perampokan di {owner.address} dari korban {owner.name}",
+            status=StatusEnum.PENDING
+        )
         db.session.add(predict)
         db.session.commit()
         logger.info(f"Predict entry created with ID: {predict.id}")
@@ -167,17 +169,6 @@ def create_report(owner_id, array_image, description):
             db.session.add(image)
         db.session.commit()
         logger.info("Images saved successfully.")
-
-        # Buat ResultPredict
-        logger.info("Creating ResultPredict entry...")
-        result_predict = ResultPredict(
-            user_id=owner.id,
-            predict_id=predict.id,
-            status=StatusEnum.PENDING
-        )
-        db.session.add(result_predict)
-        db.session.commit()
-        logger.info(f"ResultPredict entry created with ID: {result_predict.id}")
 
         # Laporan akhir
         logger.info("Building final report...")
@@ -194,7 +185,7 @@ def create_report(owner_id, array_image, description):
             ]
         }
         
-        logger.info("start send notfication...")
+        logger.info("start send notification...")
         send_incident_notifications(
             owner=owner,
             predict_id=predict.id,
@@ -203,7 +194,6 @@ def create_report(owner_id, array_image, description):
             address=owner.address
         )
    
-
         logger.info("Report created successfully.")
         return jsonify({"success": True, "report": report}), 201
 
@@ -215,4 +205,3 @@ def create_report(owner_id, array_image, description):
         logger.error(f"An unexpected error occurred: {str(e)}")
         db.session.rollback()
         return jsonify({"error": "An unexpected error occurred"}), 500
-   

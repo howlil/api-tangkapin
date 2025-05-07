@@ -1,7 +1,7 @@
-from flask import Blueprint, request,jsonify
+from flask import Blueprint, request, jsonify
 from app.controllers.auth_controller import login_user
 from app.middlewares.auth_middleware import authenticate, authorize
-from app.controllers.report_controller import get_predicts, get_predict_detail,get_predicts_all,get_predict_detail_police
+from app.controllers.report_controller import get_predicts, get_predict_detail, get_predicts_all, get_predict_detail_police
 from app.controllers.cctv_controller import video_feed, load_model
 from app.controllers.detection_controller import update_status
 import os
@@ -63,9 +63,9 @@ def get_predict_detail_polices(predict_id):
 @main_bp.route('/api/v1/reports/<uuid:predict_id>', methods=['PATCH'])
 @authenticate
 @authorize("POLICE")
-def update_status_preditc(predict_id):
+def update_status_predict(predict_id):
     data = request.get_json()
-    return update_status(predict_id,data)
+    return update_status(predict_id, data)
 
 @main_bp.route('/api/v1/cctv', methods=['GET'])
 @authenticate

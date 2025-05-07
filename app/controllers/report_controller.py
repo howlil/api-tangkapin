@@ -1,36 +1,31 @@
 from flask import jsonify, request
-from app.models import ResultPredict, Predict, Images, User
+from app.models import Predict, Images, User
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc
 
 
-# 
+# Get all predicts for police
 def get_predicts_all():
     try:
-
-        results = (ResultPredict.query
+        results = (Predict.query
                   .options(
-                      joinedload(ResultPredict.predict)
-                     .joinedload(Predict.images),
-                     joinedload(ResultPredict.user)
+                      joinedload(Predict.images),
+                      joinedload(Predict.user)
                   )
-                  .order_by(ResultPredict.created_at.desc())
+                  .order_by(Predict.created_at.desc())
                   .all())
 
         formatted_results = []
-        for result in results:
+        for predict in results:
             predict_data = {
-                'id': str(result.id),
-                'status': result.status.value,
-                'created_at': result.created_at.isoformat(),
-                'predict': {
-                    'id': str(result.predict.id),
-                    'deskripsi': result.predict.deskripsi,
-                    'images': [{
-                        'id': str(image.id),
-                        'name_image': image.name_image
-                    } for image in result.predict.images]
-                }
+                'id': str(predict.id),
+                'status': predict.status.value,
+                'created_at': predict.created_at.isoformat(),
+                'deskripsi': predict.deskripsi,
+                'images': [{
+                    'id': str(image.id),
+                    'name_image': image.name_image
+                } for image in predict.images]
             }
             formatted_results.append(predict_data)
 
@@ -48,6 +43,7 @@ def get_predicts_all():
         }), 500
                 
 
+# Get predicts for specific user
 def get_predicts():
     try:
         user_id = request.user.get('id')
@@ -58,30 +54,26 @@ def get_predicts():
                 "data": None
             }), 400
 
-        results = (ResultPredict.query
+        results = (Predict.query
                   .options(
-                      joinedload(ResultPredict.predict)
-                      .joinedload(Predict.images),
-                      joinedload(ResultPredict.user)
+                      joinedload(Predict.images),
+                      joinedload(Predict.user)
                   )
-                  .filter(ResultPredict.user_id == user_id)
-                  .order_by(ResultPredict.created_at.desc())
+                  .filter(Predict.user_id == user_id)
+                  .order_by(Predict.created_at.desc())
                   .all())
 
         formatted_results = []
-        for result in results:
+        for predict in results:
             predict_data = {
-                'id': str(result.id),
-                'status': result.status.value,
-                'created_at': result.created_at.isoformat(),
-                'predict': {
-                    'id': str(result.predict.id),
-                    'deskripsi': result.predict.deskripsi,
-                    'images': [{
-                        'id': str(image.id),
-                        'name_image': image.name_image
-                    } for image in result.predict.images]
-                }
+                'id': str(predict.id),
+                'status': predict.status.value,
+                'created_at': predict.created_at.isoformat(),
+                'deskripsi': predict.deskripsi,
+                'images': [{
+                    'id': str(image.id),
+                    'name_image': image.name_image
+                } for image in predict.images]
             }
             formatted_results.append(predict_data)
 
@@ -102,9 +94,9 @@ def get_last_report_time(user_id):
     try:
         # Fetch the latest report's 'created_at' for the user
         latest_report = (
-            ResultPredict.query
-            .filter(ResultPredict.user_id == user_id)
-            .order_by(ResultPredict.created_at.desc())
+            Predict.query
+            .filter(Predict.user_id == user_id)
+            .order_by(Predict.created_at.desc())
             .limit(1)
             .one_or_none()  # Returns a single result or None
         )
@@ -128,20 +120,18 @@ def get_predict_detail(predict_id):
                 "data": None
             }), 400
 
-        result = (ResultPredict.query
+        predict = (Predict.query
                  .options(
-                     joinedload(ResultPredict.predict)
-                     .joinedload(Predict.images),
-                     joinedload(ResultPredict.user)
+                     joinedload(Predict.images),
+                     joinedload(Predict.user)
                  )
                  .filter(
-                     ResultPredict.user_id == user_id,
-                     ResultPredict.id == predict_id
+                     Predict.user_id == user_id,
+                     Predict.id == predict_id
                  )
-                .order_by(ResultPredict.created_at.desc())
-                 .first())
+                .first())
 
-        if not result:
+        if not predict:
             return jsonify({
                 "error": True,
                 "message": "Predict result not found.",
@@ -149,26 +139,22 @@ def get_predict_detail(predict_id):
             }), 404
 
         detail_data = {
-            'id': str(result.id),
-            'status': result.status.value,
-            'created_at': result.created_at.isoformat(),
-            'updated_at': result.updated_at.isoformat(),
-            'predict': {
-                'id': str(result.predict.id),
-                'deskripsi': result.predict.deskripsi,
-                'created_at': result.predict.created_at.isoformat(),
-                'images': [{
-                    'id': str(image.id),
-                    'name_image': image.name_image,
-                    'created_at': image.created_at.isoformat()
-                } for image in result.predict.images]
-            },
+            'id': str(predict.id),
+            'status': predict.status.value,
+            'created_at': predict.created_at.isoformat(),
+            'updated_at': predict.updated_at.isoformat(),
+            'deskripsi': predict.deskripsi,
+            'images': [{
+                'id': str(image.id),
+                'name_image': image.name_image,
+                'created_at': image.created_at.isoformat()
+            } for image in predict.images],
             'user': {
-                'name': result.user.name,
-                'email': result.user.email,
-                'address': result.user.address,
-                'lang':result.user.lang,
-                'lat':result.user.lat
+                'name': predict.user.name,
+                'email': predict.user.email,
+                'address': predict.user.address,
+                'lang': predict.user.lang,
+                'lat': predict.user.lat
             }
         }
 
@@ -188,20 +174,17 @@ def get_predict_detail(predict_id):
         
 def get_predict_detail_police(predict_id):
     try:
-
-        result = (ResultPredict.query
+        predict = (Predict.query
                  .options(
-                     joinedload(ResultPredict.predict)
-                     .joinedload(Predict.images),
-                     joinedload(ResultPredict.user)
+                     joinedload(Predict.images),
+                     joinedload(Predict.user)
                  )
                  .filter(
-                     ResultPredict.id == predict_id
+                     Predict.id == predict_id
                  )
-                .order_by(ResultPredict.created_at.desc())
                 .first())
 
-        if not result:
+        if not predict:
             return jsonify({
                 "error": True,
                 "message": "Predict result not found.",
@@ -209,26 +192,22 @@ def get_predict_detail_police(predict_id):
             }), 404
 
         detail_data = {
-            'id': str(result.id),
-            'status': result.status.value,
-            'created_at': result.created_at.isoformat(),
-            'updated_at': result.updated_at.isoformat(),
-            'predict': {
-                'id': str(result.predict.id),
-                'deskripsi': result.predict.deskripsi,
-                'created_at': result.predict.created_at.isoformat(),
-                'images': [{
-                    'id': str(image.id),
-                    'name_image': image.name_image,
-                    'created_at': image.created_at.isoformat()
-                } for image in result.predict.images]
-            },
+            'id': str(predict.id),
+            'status': predict.status.value,
+            'created_at': predict.created_at.isoformat(),
+            'updated_at': predict.updated_at.isoformat(),
+            'deskripsi': predict.deskripsi,
+            'images': [{
+                'id': str(image.id),
+                'name_image': image.name_image,
+                'created_at': image.created_at.isoformat()
+            } for image in predict.images],
             'user': {
-                'name': result.user.name,
-                'email': result.user.email,
-                'address': result.user.address,
-                'lang':result.user.lang,
-                'lat':result.user.lat
+                'name': predict.user.name,
+                'email': predict.user.email,
+                'address': predict.user.address,
+                'lang': predict.user.lang,
+                'lat': predict.user.lat
             }
         }
 
